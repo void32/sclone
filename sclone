@@ -12,6 +12,8 @@ import sqlite3
 
 
 root = '/home/morten/Desktop/A'
+sclonedir = os.path.abspath(os.path.dirname(__file__))
+
 
 # Backup procedure
 #	 Run through db and mark deleted files
@@ -72,6 +74,18 @@ def make_tarball(tarname, datafilepath, datafilename):
 	tar.close()
 	return tarpathname
 
+
+def send_to_remote(pathname):
+	remote = "./rclone copy %s remote:default/sclone_data" % pathname
+	print(remote)
+	ret, out, err = call(remote)
+	if ret != 0:
+		print(ret)
+		print(out)
+		print(err)
+
+
+
 def backup():
 	# Get timestamp for the backup start
 	now = datetime.datetime.now()
@@ -99,15 +113,19 @@ def backup():
 			tarpathname = make_tarball(tarballname, pathname, name)
 
 			# Turn tarball into encrypted file ...
-			# ...
+			os.chdir(os.path.dirname(tarpathname))
+			gpgfilename = tarballname + '.gpg'
+			encrypt = 'echo "TestPassPhrase" | gpg --batch --no-tty --yes --passphrase-fd 0 -c -o %s %s' % (gpgfilename, tarballname)
+			print(encrypt)
+			call(encrypt)
+			os.chdir(sclonedir)
 			
 			# Send to remote
-			remote = "./rclone copy %s remote:default/sclone_data" % tarpathname
-			print(remote)
-			call(remote)
-
+			gpgpathname = os.path.join(os.path.dirname(tarpathname), gpgfilename)
+			send_to_remote(gpgpathname)
+			
 			# Make entry in db
-			make_db_entry(pathname, now, checksum, bytecount, tarballname)
+			make_db_entry(pathname, now, checksum, bytecount, gpgfilename)
 
 			# Remove tarball in tmp
 			# ...
