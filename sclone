@@ -1,0 +1,130 @@
+#!/usr/bin/env python
+from __future__ import unicode_literals
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+import os
+import datetime
+import uuid
+import tarfile
+import sqlite3
+
+
+root = '/home/morten/Desktop/A'
+
+# Backup procedure
+#	 Run through db and mark deleted files
+#	 Run through the filesystem dirs and back up new/changed files
+
+# Restore procedure (time to restore)
+#	Go through db and restore files for that time
+
+
+
+def dir_filter(path):
+	if '@eaDir' in path:
+		return True
+	return False
+
+
+def file_filter(name):
+	if name == '.DS_Store':
+		return True
+	return False
+
+
+def call(cmd):
+	from subprocess import Popen, PIPE
+	p = Popen(cmd, shell = True, stdout = PIPE, stderr = PIPE, executable = "/bin/bash")
+	stdout, stderr = p.communicate()
+	ret = p.returncode
+	return (p.returncode, stdout, stderr)
+
+
+def get_cksum(pathname):
+	ret, out, err  = call("cksum %s" % pathname.replace(' ', '\ '))
+	if ret != 0 or out is None:
+		print("This should be reported!!:")
+		print(ret, out, err)
+		return None, None
+		
+	checksum = str(out).split(' ')[0]
+	bytecount = str(out).split(' ')[1]
+	return checksum, bytecount
+
+
+def make_db_entry(pathname, date, checksum, bytecount, tarball):
+	sqlite_file = 'sclone.db' # 'sclone.db'
+	conn = sqlite3.connect(sqlite_file)
+	c = conn.cursor()
+	args = (pathname, date, checksum, bytecount, tarball)
+	c.execute("INSERT INTO meta(pathname, date, checksum, bytecount, tarball) VALUES(?,?,?,?,?)", args)
+	conn.commit()
+	conn.close()
+
+
+def make_tarball(tarname, datafilepath, datafilename):
+	tmppath = '/tmp'
+	tarpathname = os.path.join(tmppath, tarname)
+	tar = tarfile.open(tarpathname, "w:gz")
+	tar.add(datafilepath, arcname=datafilename)
+	tar.close()
+	return tarpathname
+
+def backup():
+	# Get timestamp for the backup start
+	now = datetime.datetime.now()
+	
+	# Parse the file system
+	for path, dirs, files in os.walk(root):
+		# Filter
+		if dir_filter(path):
+			continue
+		
+		print(path)
+		for name in files:
+			# Filter
+			if file_filter(name):
+				continue
+		
+			pathname = os.path.join(path, name)
+			tarballname = name.replace(' ', '') + '_' + str(now).replace(' ','T') + '_' + str(uuid.uuid4()) + '.tar.gz'
+			print(pathname)
+			
+			# Get checksum for file
+			checksum, bytecount = get_cksum(pathname)
+			
+			# Create tmp tarball
+			tarpathname = make_tarball(tarballname, pathname, name)
+
+			# Turn tarball into encrypted file ...
+			# ...
+			
+			# Send to remote
+			remote = "./rclone copy %s remote:default/sclone_data" % tarpathname
+			print(remote)
+			call(remote)
+
+			# Make entry in db
+			make_db_entry(pathname, now, checksum, bytecount, tarballname)
+
+			# Remove tarball in tmp
+			# ...
+
+	# Backup sclone folder inlc. db and send to remoteheck
+	call("./sclone_meta_backup")
+
+
+def listbackups():
+	print("listbackups")
+
+	
+def checkout():
+	print("checkout")
+	
+	
+if __name__ == "__main__":
+	backup()
+
+
