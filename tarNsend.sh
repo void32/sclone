@@ -8,8 +8,9 @@ echo $source_path_name
 
 # Collect files in a encryptated and compressed tarballi
 date_string=$(date '+%Y-%m-%d_%H:%M:%S')
-UUID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-tar_archive="/tmp/sclone_${date_string}_${UUID}.tar"
+# Date is "uniq", why add more uniqness :> ?
+#UUID=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+tar_archive="/tmp/sclone_${date_string}.tar"
 
 echo tar_archive=$tar_archive
 tar -vcf $tar_archive $source_path_name --exclude='*/\@eaDir*'
