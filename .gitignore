@@ -1,1 +1,5 @@
+rclone
 sclone.db
+sqlite3
+backends/*
+!*.zip
