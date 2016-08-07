@@ -103,8 +103,11 @@ def backup():
 				continue
 		
 			pathname = os.path.join(path, name)
-			tarballname = name.replace(' ', '') + '_' + str(now).replace(' ','T') + '_' + str(uuid.uuid4()) + '.tar.gz'
 			print(pathname)
+			
+			uuid_name = str(uuid.uuid5(uuid.NAMESPACE_DNS, name))
+			uuid_ran = str(uuid.uuid4())
+			tarballname =  ('%s-%s.tar.gz') % (uuid_name, uuid_ran)
 			
 			# Get checksum for file
 			checksum, bytecount = get_cksum(pathname)
