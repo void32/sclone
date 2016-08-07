@@ -1,5 +1,4 @@
 #! /bin/sh
 rm sclone.db
-./sqlite3 sclone.db
 ./sqlite3 sclone.db < sclone.sql
 
