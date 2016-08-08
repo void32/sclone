@@ -1,13 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 cd "$(dirname "$0")"
 
 
 # Make symbolik link for sqlite
 echo 'setup sqlite'
 
-if [[ 'Darwin' == $(uname -s) ]]; then
+if [ 'Darwin' == $(uname -s) ]; then
     sqlite_folder='sqlite-tools-osx-x86-3130000'
-elif [[ 'GNU/Linux' == $(uname -s) ]]; then
+elif [ 'Linux' == $(uname -s) ]; then
     sqlite_folder='sqlite-tools-linux-x86-3130000'
 else
     echo 'Unhandled platform for sqlite'
@@ -25,7 +25,7 @@ echo 'setup rclone'
 
 if [[ 'Darwin' == $(uname -s) ]]; then
     os=osx
-elif [[ 'GNU/Linux' == $(uname -s) ]]; then
+elif [[ 'Linux' == $(uname -s) ]]; then
     os=linux
 else
     echo "Unhandled platform for rclone"
@@ -44,13 +44,13 @@ rclone_folder=rclone-v1.32-$os-$cpu
 
 unzip -oq backends/$rclone_folder.zip -d backends/
 
-rm rclone
+rm -f rclone
 ln -s backends/$rclone_folder/rclone rclone
 
 
 # Reset db
 echo 'Reset sqlite database'
-rm sclone.db
+rm -f sclone.db
 ./sqlite3 sclone.db < sclone.sql
 
 # Set up rclone remote

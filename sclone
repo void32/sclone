@@ -10,8 +10,12 @@ import uuid
 import tarfile
 import sqlite3
 
+if len(sys.argv) == 1:
+	print "Usage: sclone <path to backup>"
+	exit(1)
 
-root = '/home/morten/Desktop/A'
+root = sys.argv[1]
+
 sclonedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -76,7 +80,7 @@ def make_tarball(tarname, datafilepath, datafilename):
 
 
 def send_to_remote(pathname):
-	remote = "./rclone copy %s remote:default/sclone_data" % pathname
+	remote = "./rclone copy %s Dropbox:sclone_data" % pathname
 	print(remote)
 	ret, out, err = call(remote)
 	if ret != 0:
